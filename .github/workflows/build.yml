@@ -1,0 +1,23 @@
+name: Build IPA
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: Build unsigned app
+        run: |
+          xcodebuild -project PrivateVPNBrowser.xcodeproj -scheme PrivateVPNBrowser \
+            -configuration Release -sdk iphoneos -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/PrivateVPNBrowser.app Payload/
+          zip -r PrivateVPNBrowser.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipa
+          path: PrivateVPNBrowser.ipa
